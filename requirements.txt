@@ -5,3 +5,4 @@ torch
 torchvision
 pillow
 streamlit-cropper
+frozendict>=2.0
