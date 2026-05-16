@@ -5,6 +5,15 @@ TP Análisis de Datos II · 2026
 
 from io import BytesIO
 import urllib.request
+import collections
+import collections.abc
+
+# Patch para Python 3.10+ — frozendict 1.2 (dependencia de experta) usa
+# collections.Mapping que fue movido a collections.abc en Python 3.10
+for _name in ("Mapping", "MutableMapping", "Callable", "Iterable",
+              "Iterator", "Sequence", "MutableSequence", "Set", "MutableSet"):
+    if not hasattr(collections, _name):
+        setattr(collections, _name, getattr(collections.abc, _name))
 
 import torch
 import clip
