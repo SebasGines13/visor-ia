@@ -43,6 +43,23 @@ CLIP_LABELS = [
 
 _model, _preprocess, _text_tokens = None, None, None
 
+SCORE_CENTERS = torch.tensor([
+    0.210,  # foto_producto
+    0.275,  # tabla_talles
+    0.260,  # lifestyle
+    0.285,  # marca_agua
+    0.235,  # fondo_blanco
+    0.260,  # baja_calidad
+    0.265,  # foto_detalle
+    0.280,  # multiple_productos
+    0.285,  # es_infografia
+    0.280,  # es_screenshot
+    0.260,  # datos_contacto
+    0.280,  # contenido_prohibido
+    0.270,  # es_documento
+])
+SCORE_SCALE = 35.0
+
 
 def load_clip():
     global _model, _preprocess, _text_tokens
@@ -52,12 +69,17 @@ def load_clip():
 
 
 def score_from_pil(img: Image.Image) -> dict:
-    """Recibe una imagen PIL y devuelve scores CLIP."""
+    """Recibe una imagen PIL y devuelve scores CLIP independientes por label."""
     load_clip()
-    img_t = _preprocess(img.convert("RGB")).unsqueeze(0)
+    img_rgb = img.convert("RGB")
+    img_t = _preprocess(img_rgb).unsqueeze(0)
     with torch.no_grad():
-        logits, _ = _model(img_t, _text_tokens)
-        probs = logits.softmax(dim=-1)[0].tolist()
+        image_features = _model.encode_image(img_t)
+        text_features = _model.encode_text(_text_tokens)
+        image_features = image_features / image_features.norm(dim=-1, keepdim=True)
+        text_features = text_features / text_features.norm(dim=-1, keepdim=True)
+        similarities = (image_features @ text_features.T)[0].float()
+        probs = torch.sigmoid((similarities - SCORE_CENTERS) * SCORE_SCALE).tolist()
     return {
         "foto_producto":      probs[0],
         "tabla_talles":       probs[1],
@@ -152,80 +174,80 @@ class ValidadorFotos(KnowledgeEngine):
 
     # ── Ciclo 1: Scores → Hechos ──
 
-    @Rule(Scores(foto_producto=P(lambda x: x > 0.25)), salience=100)
+    @Rule(Scores(foto_producto=P(lambda x: x > 0.80)), salience=100)
     def r1_destacado(self):
         self.declare(ProductoDestacado())
-        self._log("R1p", "ProductoDestacado", "foto_producto > 0.25")
+        self._log("R1p", "ProductoDestacado", "foto_producto > 0.80")
 
-    @Rule(Scores(foto_producto=P(lambda x: x > 0.12)), salience=100)
+    @Rule(Scores(foto_producto=P(lambda x: x > 0.55)), salience=100)
     def r1(self):
         self.declare(ProductoVisible())
-        self._log("R1", "ProductoVisible", "foto_producto > 0.12")
+        self._log("R1", "ProductoVisible", "foto_producto > 0.55")
 
-    @Rule(Scores(foto_producto=P(lambda x: 0.04 < x <= 0.12)), salience=100)
+    @Rule(Scores(foto_producto=P(lambda x: 0.45 < x <= 0.55)), salience=100)
     def r1b(self):
         self.declare(ProductoParcial())
-        self._log("R1b", "ProductoParcial", "0.04 < foto_producto <= 0.12")
+        self._log("R1b", "ProductoParcial", "0.45 < foto_producto <= 0.55")
 
-    @Rule(Scores(tabla_talles=P(lambda x: x > 0.50)), salience=100)
+    @Rule(Scores(tabla_talles=P(lambda x: x > 0.75)), salience=100)
     def r2(self):
         self.declare(EsTabla())
-        self._log("R2", "EsTabla", "tabla_talles > 0.50")
+        self._log("R2", "EsTabla", "tabla_talles > 0.75")
 
-    @Rule(Scores(lifestyle=P(lambda x: x > 0.20)), salience=100)
+    @Rule(Scores(lifestyle=P(lambda x: x > 0.75)), salience=100)
     def r3(self):
         self.declare(EsLifestyle())
-        self._log("R3", "EsLifestyle", "lifestyle > 0.20")
+        self._log("R3", "EsLifestyle", "lifestyle > 0.75")
 
-    @Rule(Scores(marca_agua=P(lambda x: x > 0.55)), salience=100)
+    @Rule(Scores(marca_agua=P(lambda x: x > 0.75)), salience=100)
     def r4(self):
         self.declare(TieneWatermark())
-        self._log("R4", "TieneWatermark", "marca_agua > 0.55")
+        self._log("R4", "TieneWatermark", "marca_agua > 0.75")
 
-    @Rule(Scores(baja_calidad=P(lambda x: x > 0.50)), salience=100)
+    @Rule(Scores(baja_calidad=P(lambda x: x > 0.75)), salience=100)
     def r5(self):
         self.declare(BajaCalidad())
-        self._log("R5", "BajaCalidad", "baja_calidad > 0.50")
+        self._log("R5", "BajaCalidad", "baja_calidad > 0.75")
 
     @Rule(Scores(fondo_blanco=P(lambda x: x > 0.60)), salience=100)
     def r6(self):
         self.declare(FondoProfesional())
         self._log("R6", "FondoProfesional", "fondo_blanco > 0.60")
 
-    @Rule(Scores(foto_detalle=P(lambda x: x > 0.25)), salience=100)
+    @Rule(Scores(foto_detalle=P(lambda x: x > 0.75)), salience=100)
     def r7(self):
         self.declare(FotoDetalle())
-        self._log("R7", "FotoDetalle", "foto_detalle > 0.25")
+        self._log("R7", "FotoDetalle", "foto_detalle > 0.75")
 
-    @Rule(Scores(es_infografia=P(lambda x: x > 0.35)), salience=100)
+    @Rule(Scores(es_infografia=P(lambda x: x > 0.75)), salience=100)
     def r7b(self):
         self.declare(EsInfografia())
-        self._log("R7b", "EsInfografia", "es_infografia > 0.35")
+        self._log("R7b", "EsInfografia", "es_infografia > 0.75")
 
-    @Rule(Scores(es_screenshot=P(lambda x: x > 0.35)), salience=100)
+    @Rule(Scores(es_screenshot=P(lambda x: x > 0.75)), salience=100)
     def r7c(self):
         self.declare(EsScreenshot())
-        self._log("R7c", "EsScreenshot", "es_screenshot > 0.35")
+        self._log("R7c", "EsScreenshot", "es_screenshot > 0.75")
 
-    @Rule(Scores(multiple_productos=P(lambda x: x > 0.50)), salience=100)
+    @Rule(Scores(multiple_productos=P(lambda x: x > 0.75)), salience=100)
     def r8(self):
         self.declare(MultipleProductos())
-        self._log("R8", "MultipleProductos", "multiple_productos > 0.50")
+        self._log("R8", "MultipleProductos", "multiple_productos > 0.75")
 
-    @Rule(Scores(datos_contacto=P(lambda x: x > 0.60)), salience=100)
+    @Rule(Scores(datos_contacto=P(lambda x: x > 0.75)), salience=100)
     def r8b(self):
         self.declare(TieneDatosContacto())
-        self._log("R8b", "TieneDatosContacto", "datos_contacto > 0.60")
+        self._log("R8b", "TieneDatosContacto", "datos_contacto > 0.75")
 
-    @Rule(Scores(es_documento=P(lambda x: x > 0.30)), salience=100)
+    @Rule(Scores(es_documento=P(lambda x: x > 0.75)), salience=100)
     def r8d(self):
         self.declare(EsDocumento())
-        self._log("R8d", "EsDocumento", "es_documento > 0.30")
+        self._log("R8d", "EsDocumento", "es_documento > 0.75")
 
-    @Rule(Scores(contenido_prohibido=P(lambda x: x > 0.25)), salience=100)
+    @Rule(Scores(contenido_prohibido=P(lambda x: x > 0.75)), salience=100)
     def r8c(self):
         self.declare(ContenidoProhibido())
-        self._log("R8c", "ContenidoProhibido", "contenido_prohibido > 0.25")
+        self._log("R8c", "ContenidoProhibido", "contenido_prohibido > 0.75")
 
     # ── Ciclo 2: Hechos → Decisión (encadenamiento) ──
 
@@ -279,7 +301,13 @@ class ValidadorFotos(KnowledgeEngine):
         self.declare(Decision(resultado="REVISAR", motivo="Producto parcialmente visible — foto recortada o poco clara"))
         self._log("R12b", "REVISAR", "ProductoParcial")
 
-    @Rule(NOT(ProductoVisible()), NOT(ProductoParcial()), NOT(EsTabla()), NOT(EsLifestyle()), salience=15)
+    @Rule(
+        NOT(ProductoVisible()),
+        NOT(ProductoParcial()),
+        NOT(EsTabla()),
+        NOT(EsLifestyle()),
+        salience=15,
+    )
     def r13(self):
         self.declare(Decision(resultado="RECHAZAR", motivo="Producto no identificable en la foto"))
         self._log("R13", "RECHAZAR", "NOT ProductoVisible")
