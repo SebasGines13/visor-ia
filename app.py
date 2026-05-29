@@ -14,19 +14,19 @@ from expert_system import evaluar
 from streamlit_cropper import st_cropper
 
 SCORE_INFO = {
-    "foto_producto":       ("📦", "¿Se ve claramente el producto?",                    "> 0.12 → visible · 0.04–0.12 → parcial"),
-    "tabla_talles":        ("📏", "¿Es una tabla de medidas/talles?",                  "> 0.50 → rechazar"),
-    "lifestyle":           ("🧍", "¿Hay una persona o modelo en la foto?",             "> 0.20 → revisar / aprobar"),
-    "marca_agua":          ("💧", "¿Tiene marca de agua o logo superpuesto?",          "> 0.55 → revisar"),
+    "foto_producto":       ("📦", "¿Se ve claramente el producto?",                    "> 0.55 → visible · 0.45–0.55 → parcial"),
+    "tabla_talles":        ("📏", "¿Es una tabla de medidas/talles?",                  "> 0.75 → rechazar"),
+    "lifestyle":           ("🧍", "¿Hay una persona o modelo en la foto?",             "> 0.75 → revisar / aprobar"),
+    "marca_agua":          ("💧", "¿Tiene marca de agua o logo superpuesto?",          "> 0.75 → revisar"),
     "fondo_blanco":        ("⬜", "¿El fondo es blanco o neutro?",                     "> 0.60 → bonus calidad"),
-    "baja_calidad":        ("🌫️", "¿La foto es borrosa u oscura?",                    "> 0.50 → rechazar"),
-    "foto_detalle":        ("🔍", "¿Es un primer plano de textura/detalle?",           "> 0.25 → posible premium"),
-    "multiple_productos":  ("🗂️", "¿Hay varios productos en la imagen?",              "> 0.50 → revisar"),
-    "es_infografia":       ("📊", "¿Es un infográfico de características?",            "> 0.35 → rechazar"),
-    "es_screenshot":       ("🖥️", "¿Es una captura de pantalla de un sitio?",         "> 0.35 → rechazar"),
-    "datos_contacto":      ("📞", "¿Tiene teléfono, WhatsApp o redes superpuestos?",   "> 0.60 → rechazar"),
-    "contenido_prohibido": ("🚫", "¿Tiene armas, drogas, odio u obscenidad?",          "> 0.25 → rechazar"),
-    "es_documento":        ("🧾", "¿Es una factura, ticket o documento impreso?",       "> 0.30 → rechazar"),
+    "baja_calidad":        ("🌫️", "¿La foto es borrosa u oscura?",                    "> 0.75 → rechazar"),
+    "foto_detalle":        ("🔍", "¿Es un primer plano de textura/detalle?",           "> 0.75 → posible premium"),
+    "multiple_productos":  ("🗂️", "¿Hay varios productos en la imagen?",              "> 0.75 → revisar"),
+    "es_infografia":       ("📊", "¿Es un infográfico de características?",            "> 0.75 → rechazar"),
+    "es_screenshot":       ("🖥️", "¿Es una captura de pantalla de un sitio?",         "> 0.75 → rechazar"),
+    "datos_contacto":      ("📞", "¿Tiene teléfono, WhatsApp o redes superpuestos?",   "> 0.75 → rechazar"),
+    "contenido_prohibido": ("🚫", "¿Tiene armas, drogas, odio u obscenidad?",          "> 0.75 → rechazar"),
+    "es_documento":        ("🧾", "¿Es una factura, ticket o documento impreso?",       "> 0.75 → rechazar"),
 }
 
 RESULT_CSS = {
@@ -60,12 +60,16 @@ section[data-testid="stSidebar"] { display: none; }
 .stTabs [data-baseweb="tab-panel"] { padding-top: 4px !important; }
 div[data-testid="stTabsContent"] { padding-top: 0 !important; }
 /* Tabs font size */
+.stTabs [role="tablist"] { overflow-x: auto; white-space: nowrap; }
 .stTabs [data-baseweb="tab"] { font-size: 21px !important; padding: 10px 18px !important; }
 .stTabs [data-baseweb="tab"] p { font-size: 21px !important; }
 @media (max-width: 768px) {
+    .stTabs [role="tablist"] { gap: 2px; }
     .stTabs [data-baseweb="tab"] { font-size: 13px !important; padding: 6px 10px !important; }
     .stTabs [data-baseweb="tab"] p { font-size: 13px !important; }
     .block-container { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
+    .result-box { padding: 12px 14px !important; font-size: 15px !important; }
+    .rule-chip { font-size: 11px !important; max-width: 100%; overflow-wrap: anywhere; }
 }
 
 .result-box  { padding: 16px 20px; border-radius: 10px; font-size: 18px; font-weight: bold; margin-top: 12px; }
@@ -438,7 +442,7 @@ with t_portada:
 
   <div class="visorai-big">VisorAI</div>
   <div class="visorai-tagline-big">Validación inteligente de fotos de producto</div>
-  <div class="visorai-tp-detail">IA Híbrida · CLIP + Experta RBES · Forward Chaining · 13 labels · 31 reglas</div>
+  <div class="visorai-tp-detail">IA Híbrida · CLIP + Experta RBES · Forward Chaining · 13 labels · 32 reglas</div>
 
   <div class="portada-badges">
     <span class="pbadge">📅 <b>4 de junio, 2026</b></span>
@@ -600,7 +604,7 @@ with t_arq:
   <div class="afb">
     <span class="af-icon">📊</span>
     <span class="af-name">Scores</span>
-    <span class="af-tech">Softmax · [0, 1]</span>
+    <span class="af-tech">Similitud independiente · [0, 1]</span>
   </div>
   <div class="af-arrow">→</div>
   <div class="afb" style="border-color:#bc8cff">
@@ -630,7 +634,7 @@ with t_arq:
       <span class="ec-tag">Zero-shot</span>
       <span class="ec-tag">Vision Transformer</span>
       <span class="ec-tag">Embeddings</span>
-      <span class="ec-tag">Softmax</span>
+      <span class="ec-tag">Sigmoid calibrado</span>
       <span class="ec-tag">OpenAI</span>
     </div>
   </div>
@@ -639,14 +643,14 @@ with t_arq:
     <div class="ec-name">Experta RBES</div>
     <div class="ec-desc">
       Motor de inferencia con <b>Forward Chaining</b>: parte de los scores CLIP como hechos,
-      aplica 31 reglas organizadas en dos ciclos y deriva la decisión final.
+      aplica 32 reglas organizadas en dos ciclos y deriva la decisión final.
       Cada regla es interpretable, auditable y modificable sin reentrenamiento.
     </div>
     <div class="ec-tags">
       <span class="ec-tag">Forward Chaining</span>
       <span class="ec-tag">Salience</span>
       <span class="ec-tag">Hechos</span>
-      <span class="ec-tag">31 reglas</span>
+      <span class="ec-tag">32 reglas</span>
       <span class="ec-tag">Python</span>
     </div>
   </div>
@@ -662,13 +666,13 @@ with t_arq:
       del dominio: <em>ProductoVisible</em>, <em>EsTabla</em>, <em>BajaCalidad</em>,
       <em>ContenidoProhibido</em>, etc.
     </div>
-    <div class="cc-arrow">foto_producto > 0.12  →  ProductoVisible</div>
+    <div class="cc-arrow">foto_producto > 0.55  →  ProductoVisible</div>
   </div>
   <div class="cycle-card">
     <div class="cc-num" style="color:#bc8cff">02</div>
     <div class="cc-title">Hechos → Decisión final</div>
     <div class="cc-desc">
-      16 reglas combinan los hechos intermedios usando lógica proposicional
+      17 reglas combinan los hechos intermedios usando lógica proposicional
       y salience para resolver conflictos. Contenido prohibido (35) siempre
       gana sobre calidad de foto (1).
     </div>
@@ -697,7 +701,7 @@ with t_sistema:
 
 <div class="kpi-big">
   <div class="kpib"><div class="kn c-blue">13</div><div class="kl">Labels CLIP</div></div>
-  <div class="kpib"><div class="kn c-green">31</div><div class="kl">Reglas activas</div></div>
+  <div class="kpib"><div class="kn c-green">32</div><div class="kl">Reglas activas</div></div>
   <div class="kpib"><div class="kn c-purple">2</div><div class="kl">Ciclos de inferencia</div></div>
   <div class="kpib"><div class="kn c-orange">5</div><div class="kl">Decisiones posibles</div></div>
 </div>
@@ -746,7 +750,7 @@ with t_sistema:
   </div>
   <div class="label-row">
     <div class="label-emoji">📞</div>
-    <div><div class="label-name">datos_contacto</div><div class="label-desc">Teléfono, WhatsApp o redes sociales</div><div class="label-action la-reject">› rechazar [s=30, umbral 0.60]</div></div>
+    <div><div class="label-name">datos_contacto</div><div class="label-desc">Teléfono, WhatsApp o redes sociales</div><div class="label-action la-reject">› rechazar [s=30, umbral 0.75]</div></div>
   </div>
   <div class="label-row">
     <div class="label-emoji">🚫</div>
@@ -804,6 +808,19 @@ with t_evaluar:
 .eval-rule-chip {
     display: inline-block; background: #1e2d45; color: #90caf9; border-radius: 6px;
     padding: 4px 14px; margin: 3px; font-size: 15px; font-family: monospace;
+    max-width: 100%; overflow-wrap: anywhere;
+}
+@media (max-width: 768px) {
+    .eval-decision {
+        padding: 16px 18px !important;
+        gap: 12px !important;
+        align-items: flex-start !important;
+    }
+    .eval-decision .ed-emoji { font-size: 34px !important; }
+    .eval-decision .ed-result { font-size: 26px !important; }
+    .eval-decision .ed-motivo { font-size: 14px !important; }
+    .eval-section-hdr { font-size: 16px !important; }
+    .eval-rule-chip { font-size: 12px !important; padding: 3px 8px !important; }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -848,7 +865,7 @@ with t_evaluar:
                     aspect_ratio=None,
                 )
             else:
-                st.image(img, use_container_width=True, caption=nombre)
+                st.image(img, width="stretch", caption=nombre)
                 img_eval = img
         with col_result:
             resultado = evaluar_con_spinner(img_eval)
@@ -885,40 +902,43 @@ with t_evaluar:
 # ──────────────────────────────────────────────
 with t_reglas:
     st.subheader("Base de Reglas — Forward Chaining")
-    st.caption("31 reglas en dos ciclos: Scores → Hechos y Hechos → Decisión")
+    st.caption("32 reglas en dos ciclos: Scores → Hechos y Hechos → Decisión")
 
     st.markdown("### Ciclo 1 — Scores → Hechos intermedios (salience=100)")
     st.table({
-        "ID":             ["R1","R1b","R2","R3","R4","R5","R6","R7","R7b","R7c","R8","R8b","R8c"],
+        "ID":             ["R1p","R1","R1b","R2","R3","R4","R5","R6","R7","R7b","R7c","R8","R8b","R8d","R8c"],
         "Condición":      [
-            "foto_producto > 0.12",
-            "0.04 < foto_producto ≤ 0.12",
-            "tabla_talles > 0.50",
-            "lifestyle > 0.20",
-            "marca_agua > 0.55",
-            "baja_calidad > 0.50",
+            "foto_producto > 0.80",
+            "foto_producto > 0.55",
+            "0.45 < foto_producto ≤ 0.55",
+            "tabla_talles > 0.75",
+            "lifestyle > 0.75",
+            "marca_agua > 0.75",
+            "baja_calidad > 0.75",
             "fondo_blanco > 0.60",
-            "foto_detalle > 0.25",
-            "es_infografia > 0.35",
-            "es_screenshot > 0.35",
-            "multiple_productos > 0.50",
-            "datos_contacto > 0.60",
-            "contenido_prohibido > 0.25",
+            "foto_detalle > 0.75",
+            "es_infografia > 0.75",
+            "es_screenshot > 0.75",
+            "multiple_productos > 0.75",
+            "datos_contacto > 0.75",
+            "es_documento > 0.75",
+            "contenido_prohibido > 0.75",
         ],
         "Hecho generado": [
-            "ProductoVisible","ProductoParcial","EsTabla","EsLifestyle","TieneWatermark",
+            "ProductoDestacado","ProductoVisible","ProductoParcial","EsTabla","EsLifestyle","TieneWatermark",
             "BajaCalidad","FondoProfesional","FotoDetalle","EsInfografia","EsScreenshot",
-            "MultipleProductos","TieneDatosContacto","ContenidoProhibido",
+            "MultipleProductos","TieneDatosContacto","EsDocumento","ContenidoProhibido",
         ],
     })
 
     st.markdown("### Ciclo 2 — Hechos → Decisión")
     st.table({
-        "ID":         ["R_PROHIBIDO","R_CONTACTO","R14b","R9","R10","R10b","R10c","R11","R15","R12b","R12","R13","R14","R16b","R16","R17"],
+        "ID":         ["R_PROHIBIDO","R_CONTACTO","R14b","R_DOC","R9","R10","R10b","R10c","R11","R15","R12b","R12","R13","R14","R16b","R16","R17"],
         "Condición":  [
             "ContenidoProhibido",
             "TieneDatosContacto",
             "EsScreenshot",
+            "EsDocumento",
             "EsTabla",
             "EsLifestyle ∧ ¬ProductoVisible",
             "EsLifestyle ∧ ProductoVisible ∧ ¬ProductoDestacado",
@@ -934,11 +954,11 @@ with t_reglas:
             "ProductoVisible ∧ ¬problemas",
         ],
         "Decisión":   [
-            "❌ RECHAZAR","❌ RECHAZAR","❌ RECHAZAR","❌ RECHAZAR","❌ RECHAZAR",
+            "❌ RECHAZAR","❌ RECHAZAR","❌ RECHAZAR","❌ RECHAZAR","❌ RECHAZAR","❌ RECHAZAR",
             "⚠️ REVISAR","✅ APROBAR","❌ RECHAZAR","❌ RECHAZAR","⚠️ REVISAR",
             "⚠️ REVISAR","❌ RECHAZAR","⚠️ REVISAR","🏆 APROBAR ⭐⭐","🌟 APROBAR ⭐","✅ APROBAR",
         ],
-        "Salience":   ["35","30","25","20","20","19","18","20","20","18","15","15","10","7","5","1"],
+        "Salience":   ["35","30","25","22","20","20","19","18","20","20","18","15","15","10","7","5","1"],
     })
 
     st.info("💡 **Resolución de conflictos por Salience:** cuando múltiples reglas aplican, se ejecuta primero la de mayor salience. Contenido prohibido (35) y datos de contacto (30) tienen prioridad absoluta sobre cualquier otra evaluación.")
@@ -1041,7 +1061,7 @@ with t_stack:
           <span class="ec-tag">Zero-shot learning</span>
           <span class="ec-tag">Embeddings multimodales</span>
           <span class="ec-tag">IA Subsimbólica</span>
-          <span class="ec-tag">Softmax · 13 labels</span>
+          <span class="ec-tag">Scores independientes · 13 labels</span>
         </div>
       </div>
     </div>
@@ -1055,9 +1075,9 @@ with t_stack:
         <div class="ec-name">PyTorch</div>
         <div class="ec-desc">
           Motor de cómputo tensorial que ejecuta el modelo CLIP. Gestiona la codificación
-          de imágenes en embeddings vectoriales y el cálculo de similitudes coseno via
-          <b>softmax</b>. Su uso es transparente al motor de reglas — los scores que produce
-          son simplemente números entre 0 y 1 que Experta consume como hechos. Esto ilustra
+          de imágenes en embeddings vectoriales y el cálculo de similitudes coseno
+          calibradas con <b>sigmoid</b>. Su uso es transparente al motor de reglas — los scores
+          que produce son números entre 0 y 1 que Experta consume como hechos. Esto ilustra
           la separación de capas en la arquitectura híbrida: PyTorch + CLIP producen
           <em>señales numéricas</em>, Experta aplica <em>política simbólica</em>.
         </div>
@@ -1138,7 +1158,7 @@ with t_stack:
     <div class="cc-desc">
       El motor Experta implementa exactamente la arquitectura RBES estudiada:
       <b>Base de Hechos</b> (scores + hechos intermedios), <b>Base de Conocimiento</b>
-      (31 reglas IF-THEN), <b>Motor de Inferencia</b> (Forward Chaining) y
+      (32 reglas IF-THEN), <b>Motor de Inferencia</b> (Forward Chaining) y
       <b>mecanismo de resolución de conflictos</b> (Salience). Cada componente
       tiene su equivalente directo en la teoría clásica de SE.
     </div>
