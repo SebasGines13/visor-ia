@@ -62,4 +62,4 @@ streamlit run app.py
 
 ## Equipo
 
-Sebastián Gines · Carina Acosta · Tomás Ramírez · Carlos Mercuri · Lourdes Reynaldo · Alex Surco Garnica
+Carina Acosta · Tomás Ramírez · Carlos Mercuri · Lourdes Reynaldo · Alex Surco Garnica - Sebastián Gines
