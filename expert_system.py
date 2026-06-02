@@ -61,6 +61,7 @@ SCORE_CENTERS = torch.tensor([
 SCORE_SCALE = 35.0
 
 
+# Inicializa el modelo CLIP y tokeniza las etiquetas una sola vez (lazy loading)
 def load_clip():
     global _model, _preprocess, _text_tokens
     if _model is None:
@@ -68,6 +69,7 @@ def load_clip():
         _text_tokens = clip.tokenize(CLIP_LABELS)
 
 
+# Ejecuta CLIP sobre una imagen PIL y devuelve probabilidades por categoría
 def score_from_pil(img: Image.Image) -> dict:
     """Recibe una imagen PIL y devuelve scores CLIP independientes por label."""
     load_clip()
@@ -165,6 +167,7 @@ class Decision(Fact):
 # 3. MOTOR DE INFERENCIA — Experta RBES
 # ─────────────────────────────────────────────
 
+# Motor principal de inferencia basado en reglas (RBES)
 class ValidadorFotos(KnowledgeEngine):
     """
     Sistema Experto con Forward Chaining.
@@ -365,6 +368,7 @@ class ValidadorFotos(KnowledgeEngine):
 # 4. FUNCIÓN PRINCIPAL
 # ─────────────────────────────────────────────
 
+# Punto de entrada principal: combina CLIP + reglas expertas
 def evaluar(img: Image.Image) -> dict:
     """
     Evalúa una imagen PIL.

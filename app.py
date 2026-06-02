@@ -95,6 +95,7 @@ t_portada, t_problema, t_arq, t_sistema, t_evaluar, t_reglas, t_stack = st.tabs(
 # HELPERS
 # ──────────────────────────────────────────────
 
+# Muestra visualmente los scores calculados por CLIP
 def render_scores(scores: dict):
     for label, val in scores.items():
         color = "🟢" if val > 0.6 else "🟡" if val > 0.35 else "🔴"
@@ -102,6 +103,7 @@ def render_scores(scores: dict):
         st.progress(float(val), text=f"{color} **{label}**: {val:.3f}  {emoji} _{descripcion}_ · `{umbral}`")
 
 
+# Renderiza la decisión final del sistema experto
 def render_decision(resultado: dict, box_class="result-box"):
     res = resultado["resultado"]
     css, emoji = css_for(res)
@@ -112,6 +114,7 @@ def render_decision(resultado: dict, box_class="result-box"):
     )
 
 
+# Muestra las reglas disparadas para explicar la decisión
 def render_rules(reglas: list):
     if reglas:
         html = "".join(
@@ -121,6 +124,7 @@ def render_rules(reglas: list):
         st.markdown(html, unsafe_allow_html=True)
 
 
+# Ejecuta la evaluación mostrando feedback visual al usuario
 def evaluar_con_spinner(img: Image.Image, label: str = ""):
     msg = f"⚙️ Procesando {label}..." if label else "⚙️ Procesando con CLIP + Motor de inferencia..."
     with st.spinner(msg):
