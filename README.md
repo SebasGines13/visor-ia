@@ -11,7 +11,7 @@ Prof. Agustín Asuaje · Grupo B
 Sistema Experto Híbrido que evalúa si una foto de publicación de e-commerce cumple con los estándares de publicación.
 
 - **IA Subsimbólica**: CLIP ViT-B/32 — clasificación zero-shot sobre 13 labels
-- **IA Simbólica**: Experta RBES — 32 reglas con Forward Chaining en 2 ciclos
+- **IA Simbólica**: Experta RBES — 38 reglas con Forward Chaining en 2 ciclos
 - **Decisiones**: APROBAR ⭐⭐ / APROBAR ⭐ / APROBAR / REVISAR / RECHAZAR
 
 ## Archivos
@@ -19,7 +19,7 @@ Sistema Experto Híbrido que evalúa si una foto de publicación de e-commerce c
 ```
 tp/
 ├── app.py              # Interfaz Streamlit (7 tabs de presentación + evaluación)
-├── expert_system.py    # Motor: CLIP + Experta (13 labels, 32 reglas)
+├── expert_system.py    # Motor: CLIP + Experta (13 labels, 38 reglas)
 ├── requirements.txt    # Dependencias
 └── .streamlit/
     └── config.toml     # Tema oscuro
@@ -62,4 +62,4 @@ streamlit run app.py
 
 ## Equipo
 
-Carina Acosta · Tomás Ramírez · Carlos Mercuri · Lourdes Reynaldo · Alex Surco Garnica - Sebastián Gines
+Sebastián Gines · Carina Acosta · Tomás Ramírez · Carlos Mercuri · Lourdes Reynaldo · Alex Surco Garnica

@@ -14,19 +14,19 @@ from expert_system import evaluar
 from streamlit_cropper import st_cropper
 
 SCORE_INFO = {
-    "foto_producto":       ("📦", "¿Se ve claramente el producto?",                    "> 0.55 → visible · 0.45–0.55 → parcial"),
-    "tabla_talles":        ("📏", "¿Es una tabla de medidas/talles?",                  "> 0.75 → rechazar"),
-    "lifestyle":           ("🧍", "¿Hay una persona o modelo en la foto?",             "> 0.75 → revisar / aprobar"),
-    "marca_agua":          ("💧", "¿Tiene marca de agua o logo superpuesto?",          "> 0.75 → revisar"),
-    "fondo_blanco":        ("⬜", "¿El fondo es blanco o neutro?",                     "> 0.60 → bonus calidad"),
-    "baja_calidad":        ("🌫️", "¿La foto es borrosa u oscura?",                    "> 0.75 → rechazar"),
-    "foto_detalle":        ("🔍", "¿Es un primer plano de textura/detalle?",           "> 0.75 → posible premium"),
-    "multiple_productos":  ("🗂️", "¿Hay varios productos en la imagen?",              "> 0.75 → revisar"),
-    "es_infografia":       ("📊", "¿Es un infográfico de características?",            "> 0.75 → rechazar"),
-    "es_screenshot":       ("🖥️", "¿Es una captura de pantalla de un sitio?",         "> 0.75 → rechazar"),
-    "datos_contacto":      ("📞", "¿Tiene teléfono, WhatsApp o redes superpuestos?",   "> 0.75 → rechazar"),
-    "contenido_prohibido": ("🚫", "¿Tiene armas, drogas, odio u obscenidad?",          "> 0.75 → rechazar"),
-    "es_documento":        ("🧾", "¿Es una factura, ticket o documento impreso?",       "> 0.75 → rechazar"),
+    "foto_producto":       ("📦", "¿Se ve claramente el producto?",                    "> 0.12 → visible · 0.04–0.12 → parcial"),
+    "tabla_talles":        ("📏", "¿Es una tabla de medidas/talles?",                  "> 0.50 → rechazar"),
+    "lifestyle":           ("🧍", "¿Hay una persona o modelo en la foto?",             "> 0.40 → revisar / aprobar"),
+    "marca_agua":          ("💧", "¿Tiene marca de agua o logo superpuesto?",          "> 0.55 → revisar"),
+    "fondo_blanco":        ("⬜", "¿El fondo es blanco o neutro?",                     "> 0.35 → bonus calidad"),
+    "baja_calidad":        ("🌫️", "¿La foto es borrosa u oscura?",                    "> 0.20 → rechazar"),
+    "foto_detalle":        ("🔍", "¿Es un primer plano de textura/detalle?",           "> 0.25 → posible premium"),
+    "multiple_productos":  ("🗂️", "¿Hay varios productos en la imagen?",              "> 0.50 → revisar"),
+    "es_infografia":       ("📊", "¿Es un infográfico de características?",            "> 0.35 → rechazar"),
+    "es_screenshot":       ("🖥️", "¿Es una captura de pantalla de un sitio?",         "> 0.35 → rechazar"),
+    "datos_contacto":      ("📞", "¿Tiene teléfono, WhatsApp o redes superpuestos?",   "> 0.60 → rechazar"),
+    "contenido_prohibido": ("🚫", "¿Tiene armas, drogas, odio u obscenidad?",          "> 0.20 sin persona · > 0.30 con persona → rechazar"),
+    "es_documento":        ("🧾", "¿Es una factura, ticket o documento impreso?",       "> 0.30 → rechazar"),
 }
 
 RESULT_CSS = {
@@ -95,7 +95,6 @@ t_portada, t_problema, t_arq, t_sistema, t_evaluar, t_reglas, t_stack = st.tabs(
 # HELPERS
 # ──────────────────────────────────────────────
 
-# Muestra visualmente los scores calculados por CLIP
 def render_scores(scores: dict):
     for label, val in scores.items():
         color = "🟢" if val > 0.6 else "🟡" if val > 0.35 else "🔴"
@@ -103,7 +102,6 @@ def render_scores(scores: dict):
         st.progress(float(val), text=f"{color} **{label}**: {val:.3f}  {emoji} _{descripcion}_ · `{umbral}`")
 
 
-# Renderiza la decisión final del sistema experto
 def render_decision(resultado: dict, box_class="result-box"):
     res = resultado["resultado"]
     css, emoji = css_for(res)
@@ -114,7 +112,6 @@ def render_decision(resultado: dict, box_class="result-box"):
     )
 
 
-# Muestra las reglas disparadas para explicar la decisión
 def render_rules(reglas: list):
     if reglas:
         html = "".join(
@@ -124,7 +121,6 @@ def render_rules(reglas: list):
         st.markdown(html, unsafe_allow_html=True)
 
 
-# Ejecuta la evaluación mostrando feedback visual al usuario
 def evaluar_con_spinner(img: Image.Image, label: str = ""):
     msg = f"⚙️ Procesando {label}..." if label else "⚙️ Procesando con CLIP + Motor de inferencia..."
     with st.spinner(msg):
@@ -446,7 +442,7 @@ with t_portada:
 
   <div class="visorai-big">VisorAI</div>
   <div class="visorai-tagline-big">Validación inteligente de fotos de producto</div>
-  <div class="visorai-tp-detail">IA Híbrida · CLIP + Experta RBES · Forward Chaining · 13 labels · 32 reglas</div>
+  <div class="visorai-tp-detail">IA Híbrida · CLIP + Experta RBES · Forward Chaining · 13 labels · 38 reglas</div>
 
   <div class="portada-badges">
     <span class="pbadge">📅 <b>4 de junio, 2026</b></span>
@@ -647,14 +643,14 @@ with t_arq:
     <div class="ec-name">Experta RBES</div>
     <div class="ec-desc">
       Motor de inferencia con <b>Forward Chaining</b>: parte de los scores CLIP como hechos,
-      aplica 32 reglas organizadas en dos ciclos y deriva la decisión final.
+      aplica 38 reglas organizadas en dos ciclos y deriva la decisión final.
       Cada regla es interpretable, auditable y modificable sin reentrenamiento.
     </div>
     <div class="ec-tags">
       <span class="ec-tag">Forward Chaining</span>
       <span class="ec-tag">Salience</span>
       <span class="ec-tag">Hechos</span>
-      <span class="ec-tag">32 reglas</span>
+      <span class="ec-tag">38 reglas</span>
       <span class="ec-tag">Python</span>
     </div>
   </div>
@@ -676,7 +672,7 @@ with t_arq:
     <div class="cc-num" style="color:#bc8cff">02</div>
     <div class="cc-title">Hechos → Decisión final</div>
     <div class="cc-desc">
-      17 reglas combinan los hechos intermedios usando lógica proposicional
+      21 reglas combinan los hechos intermedios usando lógica proposicional
       y salience para resolver conflictos. Contenido prohibido (35) siempre
       gana sobre calidad de foto (1).
     </div>
@@ -705,7 +701,7 @@ with t_sistema:
 
 <div class="kpi-big">
   <div class="kpib"><div class="kn c-blue">13</div><div class="kl">Labels CLIP</div></div>
-  <div class="kpib"><div class="kn c-green">32</div><div class="kl">Reglas activas</div></div>
+  <div class="kpib"><div class="kn c-green">38</div><div class="kl">Reglas activas</div></div>
   <div class="kpib"><div class="kn c-purple">2</div><div class="kl">Ciclos de inferencia</div></div>
   <div class="kpib"><div class="kn c-orange">5</div><div class="kl">Decisiones posibles</div></div>
 </div>
@@ -906,7 +902,7 @@ with t_evaluar:
 # ──────────────────────────────────────────────
 with t_reglas:
     st.subheader("Base de Reglas — Forward Chaining")
-    st.caption("32 reglas en dos ciclos: Scores → Hechos y Hechos → Decisión")
+    st.caption("38 reglas en dos ciclos: Scores → Hechos y Hechos → Decisión")
 
     st.markdown("### Ciclo 1 — Scores → Hechos intermedios (salience=100)")
     st.table({
@@ -915,17 +911,17 @@ with t_reglas:
             "foto_producto > 0.80",
             "foto_producto > 0.55",
             "0.45 < foto_producto ≤ 0.55",
-            "tabla_talles > 0.75",
-            "lifestyle > 0.75",
-            "marca_agua > 0.75",
-            "baja_calidad > 0.75",
+            "tabla_talles > 0.50",
+            "lifestyle > 0.20",
+            "marca_agua > 0.55",
+            "baja_calidad > 0.50",
             "fondo_blanco > 0.60",
-            "foto_detalle > 0.75",
-            "es_infografia > 0.75",
-            "es_screenshot > 0.75",
-            "multiple_productos > 0.75",
-            "datos_contacto > 0.75",
-            "es_documento > 0.75",
+            "foto_detalle > 0.25",
+            "es_infografia > 0.35",
+            "es_screenshot > 0.35",
+            "multiple_productos > 0.50",
+            "datos_contacto > 0.60",
+            "es_documento > 0.30",
             "contenido_prohibido > 0.75",
         ],
         "Hecho generado": [
@@ -1162,7 +1158,7 @@ with t_stack:
     <div class="cc-desc">
       El motor Experta implementa exactamente la arquitectura RBES estudiada:
       <b>Base de Hechos</b> (scores + hechos intermedios), <b>Base de Conocimiento</b>
-      (32 reglas IF-THEN), <b>Motor de Inferencia</b> (Forward Chaining) y
+      (38 reglas IF-THEN), <b>Motor de Inferencia</b> (Forward Chaining) y
       <b>mecanismo de resolución de conflictos</b> (Salience). Cada componente
       tiene su equivalente directo en la teoría clásica de SE.
     </div>
